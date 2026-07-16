@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"name": ".pi",
+			"path": "."
+		},
+		{
+			"name": "test",
+			"path": "../test"
+		},
+		{
+			"name": "repo",
+			"path": "../repo"
+		},
+		{
+			"name": "dev",
+			"path": "../dev"
+		}
+	],
+	"settings": {
+		"window.title": "Agent Pi"
+	}
+}

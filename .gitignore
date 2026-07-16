@@ -1,0 +1,9 @@
+.git
+agent/bin
+npm/
+sessions/
+auth.json
+models.json
+pi-debug.log
+settings.json
+trust.json

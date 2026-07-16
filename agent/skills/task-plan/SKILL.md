@@ -158,8 +158,4 @@ Set up the project, implement the core logic, add logging support, and cover it 
 ## User Intervention
 
 - If a step requires user input, **stop immediately** and state exactly what is needed.
-- If the user's answer is irrelevant or unhelpful, decide between:
-  - a) Research and try alternative approach
-  - b) Skip the task and continue
-  - c) Stop the task entirely
-  - Then ask the user which option they'd like to take.
+- If the user's answer is irrelevant or unhelpful, do research and try doing an alternative approach
