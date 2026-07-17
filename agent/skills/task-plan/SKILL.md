@@ -7,55 +7,74 @@ description: Mandatory planning workflow for all tools that perform (file, code,
 
 ## Process
 
-1. Search and analyze the user's request, then draft a plan and write it into a `## Plan` section at the **top of `TODO.md`** in the current working directory. Do not create a separate plan file — `TODO.md` is the single file for both the plan and the task checklist, from the very first draft.
+1. Search and analyze the user's request, then draft a plan and **CREATE `TODO.md` DIRECTLY** in the current working directory containing **ONLY A `## Plan` SECTION** at this stage. Do not add a `## Tasks` section yet — that only happens after acceptance (step 4).
 2. Assess whether the task is complex or complicated. **Only if it is**, ask up to **5** non-obvious clarifying questions, along with suggestions.
    - If the task is **simple, trivial, or straightforward**, skip the questions step entirely and proceed directly to restating the plan for confirmation (step 3).
    - Each question must include an option for **"Let AI decide"**.
    - If the user selects "Let AI decide" for a question, the AI makes the call itself and **must state its decision and brief reasoning before proceeding** to the next step.
-   - If the user revises the request, **edit the `## Plan` section of `TODO.md` directly** to reflect the revision, then restate the **full updated plan** before proceeding.
+   - If the user revises the request, **edit the `## Plan` section of `TODO.md` directly** to reflect the revision, then restate the **full updated plan** before proceeding. `TODO.md` still contains only `## Plan` at this point — no tasks yet.
 3. Wait for explicit **"YES"** confirmation before implementing anything.
-   - If the user does **not** accept the plan (declines, cancels, or abandons it instead of confirming), **delete `TODO.md`** (this removes the draft plan along with it, since there is nothing else to remove).
-4. Only once the plan is accepted with **"YES"**: add the **task checklist** below the `## Plan` section, inside the same `TODO.md`, using the format below.
+   - If the user does **not** accept the plan (declines, cancels, or abandons it instead of confirming), **delete `TODO.md`** (this removes the draft plan along with it, since there is nothing else in the file yet) then ask what the user wants to do instead.
+4. **Only once the plan is accepted with "YES"**: append a `## Tasks` section below the existing `## Plan` section, inside the same `TODO.md`, using the format below. The `## Tasks` checklist must never be created before this point.
 5. As each task completes, update `TODO.md` immediately, marking that specific task `[x]`.
-   - **`Task Complete` is the final line and may only be marked `[x]` after every other task in the list is already `[x]`. It must never be marked complete while any task above it is still `[ ]`.**
+   - **`Task Complete` is the final line. It may only be marked `[x]` when every single task above it has been completed — with no exceptions.**
+     - Tasks are an ordered, step-by-step sequence: each task must be **executed in order** (task 1 first, then task 2, etc.) before the next one begins.
+     - `Task Complete` MUST remain `[ ]` until the very last preceding task is marked `[x]`. If even **one** task above it is still `[ ]`, `Task Complete` MUST stay `[ ]`.
+     - Never mark `Task Complete` `[x]` prematurely, in advance, or alongside any unfinished tasks.
    - The `## Plan` section itself is never checked off or deleted while the checklist is in progress — it stays at the top of the file as the record of what was agreed to.
 
-**There is only ever one file: `TODO.md`.** It always contains, in order: the `## Plan` section first, followed by the `## Tasks` checklist once the plan is accepted.
+****There is only ever one file: `TODO.md`.** Its lifecycle has exactly two stages:
+1. **Plan drafted, not yet accepted:** `TODO.md` exists with `## Plan` only.
+2. **Plan accepted:** `TODO.md` contains `## Plan` followed by `## Tasks`.
+
+No `PLAN.md` or any other separate plan file is ever created, and `## Tasks` never appears before "YES" is given.
 
 ---
 
 ## TODO.md Format
 
-`TODO.md` has two sections, always in this order:
+`TODO.md` has two sections, always in this order, and they appear at different stages of the workflow:
 
 ```markdown
 ## Plan
 
-<the accepted plan, in prose or bullet form>
+<the drafted / accepted plan, in prose or bullet form>
 
 ## Tasks
 
-1. [ ] Task description
-2. [x] Task description
+1. [x] Task description
+2. [ ] Task description
 ...
 N. [ ] Task Complete
+<N. here refers to the last number in the task list>
 ```
 
-- Before step 3 ("YES" confirmation), the file contains **only** the `## Plan` section.
-- After acceptance, the `## Tasks` section is appended below it and is maintained using the checklist rules below.
+- **Before step 3 ("YES" confirmation):** the file contains **only** the `## Plan` section. There is no `## Tasks` heading and no checklist at all yet.
+- **After acceptance (step 4 onward):** the `## Tasks` section is appended below `## Plan` and is maintained using the checklist rules below.
 
 **Checklist rules:**
 
 - One task per line. No exceptions — never place two tasks on the same line.
 - Each line starts with a numbered list marker, followed by a single checkbox:
   `N. [ ]` (ongoing) or `N. [x]` (completed).
-- The **only** two valid checkbox states are `[ ]` and `[x]`. No other marker (`[DONE]`, `[X]`, `[✓]`, `[-]`, etc.) is permitted.
+- The **only** two valid checkbox states are `[ ]` and `[x]`. No other marker (`[DONE]`, `[X]`, `[✓]`, `[-]`, `[]` with no space, etc.) is permitted.
 - A task is marked `[x]` **immediately** when — and only when — that specific task finishes. Do not batch updates or mark tasks complete in advance.
 - The **last line** of the `## Tasks` section is always:
   `N. [ ] Task Complete`
-- `Task Complete` may be changed to `[x]` **if and only if every task above it is already `[x]`**. If even one task above it is still `[ ]`, `Task Complete` must remain `[ ]`.
+- `Task Complete` may be changed to `[x]` **if and only if every task above it is already `[x]`**, meaning all tasks have been **fully executed in their correct step-by-step order** from first to last.
+- If even one task above `Task Complete` is still `[ ]`, `Task Complete` **must remain `[ ]`** — no exceptions, no shortcuts, no batching.
 
-### Correct example
+### Correct example — plan drafted, not yet accepted
+
+```markdown
+## Plan
+
+Set up the project, install dependencies, implement the core logic, and cover it with tests.
+```
+
+*(No `## Tasks` section yet — the user has not said "YES".)*
+
+### Correct example — plan accepted, tasks in progress
 
 ```markdown
 ## Plan
@@ -92,10 +111,14 @@ Set up the project, install dependencies, implement the core logic, and cover it
 ### Not allowed
 
 ```markdown
-1. [ ] This is an ongoing task 2. [x] This is a completed task   ← two tasks on one line
-1. [DONE] Set up project                                          ← invalid marker
-1. [x] Task Complete   (while task 2 below is still [ ])          ← premature completion
-(a separate PLAN.md file)                                         ← plan must live inside TODO.md, not its own file
+## Plan
+## Tasks
+1. [ ] Do something                                               ← ## Tasks added before "YES" was given
+1. [ ] This is an ongoing task 2. [x] This is a completed task    ← two tasks on one line
+1. [DONE] Set up project                                           ← invalid marker
+2. [] Install required dependencies                                ← missing space inside checkbox
+1. [x] Task Complete   (while task 2 below is still [ ])           ← premature completion
+(a separate PLAN.md file)                                          ← plan must live inside TODO.md, not its own file
 ```
 
 ---
@@ -151,11 +174,16 @@ Set up the project, implement the core logic, add logging support, and cover it 
 5. [ ] Task Complete
 ```
 
-*(`## Plan` updated to mention the new scope; `Task Complete` moved from line 3 to line 5, reset/kept `[ ]`, and stays last.)*
+**Critical rule: `Task Complete` must never be marked `[x]` while any task above it is still `[ ]`. It is the literal final step that signifies all prior work — executed in order, from top to bottom — is fully done. Marking it early (while tasks remain `[ ]`), marking multiple steps at once without execution, or skipping intermediate tasks are all forbidden.**
 
 ---
 
 ## User Intervention
 
 - If a step requires user input, **stop immediately** and state exactly what is needed.
-- If the user's answer is irrelevant or unhelpful, do research and try doing an alternative approach
+- If the user's answer is irrelevant or unhelpful, decide between:
+  - a) Skip the task and continue
+  - b) Do research and try an alternative approach
+  - c) Stop the task entirely
+  - Then ask the user which option they'd like to take.
+- If the user abandons the plan, **delete `TODO.md`**.

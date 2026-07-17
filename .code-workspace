@@ -1,16 +1,12 @@
 {
 	"folders": [
 		{
-			"name": ".pi",
-			"path": "."
-		},
-		{
 			"name": "test",
 			"path": "../test"
 		},
 		{
-			"name": "repo",
-			"path": "../repo"
+			"name": ".pi",
+			"path": "."
 		},
 		{
 			"name": "dev",
