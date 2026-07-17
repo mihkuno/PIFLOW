@@ -9,6 +9,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { isBashToolResult } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { visibleWidth, truncateToWidth } from "@earendil-works/pi-tui";
 
 /** Minimal shape of `ctx.ui.theme` that this file relies on. */
 type Theme = {
@@ -17,17 +18,18 @@ type Theme = {
   strikethrough(text: string): string;
 };
 
+type TaskLine = { done: boolean; text: string };
+
 const PAD = " \u2003 ";   // thin space padding
 
 /* ═══════════════════ Parsing TODO.md ═══════════════ */
 
-function parseAndRender(content: string, theme: Theme): string[] {
+/** Pull `{ done, text }` entries out of the "## Tasks" section of a TODO.md. */
+function parseTasks(content: string): TaskLine[] {
   const rawLines = content.split("\n");
-  const rendered: string[] = [];
 
-  // ── Collect task lines from "## Tasks" section ──
   let inTasksSection = false;
-  const taskLines: { done: boolean; text: string }[] = [];
+  const taskLines: TaskLine[] = [];
 
   for (const raw of rawLines) {
     if (raw.startsWith("##")) {
@@ -45,42 +47,53 @@ function parseAndRender(content: string, theme: Theme): string[] {
     taskLines.push({ done: match[1].toLowerCase() === "x", text: match[2].trim() });
   }
 
+  return taskLines;
+}
+
+/**
+ * Wrap already-colorized `content` in a full-width background fill.
+ * Truncates safely (ANSI-aware) if content would overflow `width`, then pads
+ * with plain spaces up to `width` so the background paints edge-to-edge.
+ */
+function fillLine(theme: Theme, bgToken: string, content: string, width: number): string {
+  const clipped = truncateToWidth(content, Math.max(0, width));
+  const pad = Math.max(0, width - visibleWidth(clipped));
+  return theme.bg(bgToken, clipped + " ".repeat(pad));
+}
+
+/** Render parsed task lines into full-width, theme-colored widget rows. */
+function renderTaskWidget(taskLines: TaskLine[], theme: Theme, width: number): string[] {
   if (taskLines.length === 0) return [];
+
+  const rendered: string[] = [];
 
   // ── Header bar with progress ──
   const total     = taskLines.length;
   const doneCount = taskLines.filter(t => t.done).length;
   const pct       = Math.round((doneCount / total) * 100);
 
-  rendered.push(
-    theme.bg("customMessageBg", theme.fg("customMessageLabel",
-      `  📋  TASKS   ${"─".repeat(Math.min(total * 2, 45))}   ${doneCount}/${total} (${pct}%)`
-    ))
-  );
+  const headerText = `  📋  TASKS   ${"─".repeat(Math.min(total * 2, 45))}   ${doneCount}/${total} (${pct}%)`;
+  rendered.push(fillLine(theme, "customMessageBg", theme.fg("customMessageLabel", headerText), width));
 
-  // ── Separator line ──
-  rendered.push(theme.fg("borderMuted", "─".repeat(24)));
+  // ── Separator line, spanning the full width ──
+  rendered.push(theme.fg("borderMuted", "─".repeat(Math.max(0, width))));
 
-  // ── Each task row with full-line background color ✓ ──
+  // ── Each task row, background filling the entire line ──
   for (const tl of taskLines) {
     if (tl.done) {
       // DONE — muted bg, filled square ■, muted+strikethrough text
-      rendered.push(
-        theme.bg("toolSuccessBg",
-          PAD +
-          theme.fg("success", "\u25A0") +      // ■ Filled square
-          " " + theme.fg("muted", theme.strikethrough(tl.text))
-        )
-      );
+      const content =
+        PAD +
+        theme.fg("success", "\u25A0") +      // ■ Filled square
+        " " + theme.fg("muted", theme.strikethrough(tl.text));
+      rendered.push(fillLine(theme, "toolSuccessBg", content, width));
     } else {
       // NOT DONE — accent bg, outline square □, default text
-      rendered.push(
-        theme.bg("toolPendingBg",
-          PAD +
-          theme.fg("accent", "\u25A1") +       // □ Outline / hollow square
-          " " + theme.fg("text", tl.text)
-        )
-      );
+      const content =
+        PAD +
+        theme.fg("accent", "\u25A1") +       // □ Outline / hollow square
+        " " + theme.fg("text", tl.text);
+      rendered.push(fillLine(theme, "toolPendingBg", content, width));
     }
   }
 
@@ -174,10 +187,10 @@ export default function taskPlanWidgetExtension(pi: ExtensionAPI): void {
     const hash = contentHash(found);
     if (found === currentFilePath && hash === lastHash) return;
 
-    let lines: string[] | undefined;
+    let taskLines: TaskLine[];
     try {
       const fileContent = fs.readFileSync(found, "utf-8");
-      lines = parseAndRender(fileContent, ctx.ui.theme);
+      taskLines = parseTasks(fileContent);
     } catch {
       /* unreadable — leave widget as-is */
       return;
@@ -196,7 +209,14 @@ export default function taskPlanWidgetExtension(pi: ExtensionAPI): void {
       }
     }
 
-    ctx.ui.setWidget("task-widget", lines);
+    ctx.ui.setWidget("task-widget", (_tui, theme: Theme) => ({
+      render(width: number): string[] {
+        return renderTaskWidget(taskLines, theme, width);
+      },
+      invalidate(): void {
+        /* nothing cached — render() always recomputes from the latest taskLines */
+      },
+    }));
     currentFilePath = found;
     lastHash        = hash;
     startWatching(found);                            // re-watch the file's directory
